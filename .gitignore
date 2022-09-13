@@ -1,4 +1,4 @@
-examples/server/node_modules/
 *.DS_Store
 */.DS_Store
-examples/.DS_Store
+samples/.DS_Store
+samples/server/node_modules
