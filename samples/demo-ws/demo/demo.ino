@@ -12,12 +12,17 @@
   #include <WiFi.h>
 #endif
 
-char serverAddress[] = "192.168.0.114";
+///////please enter your sensitive data in the Secret arduino_secrets.h
+/////// WiFi Settings ///////
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+char serverAddress[] = "localhost";
 int port = 3000;
 
 WiFiClient wifi;
-HttpClient client = HttpClient(wifi, serverAddress, port);
+WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
 int status = WL_IDLE_STATUS;
+int count = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -46,20 +51,33 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("making GET request");
-  String contentType = "application/json";
+  Serial.println("starting WebSocket client");
+  client.begin();
 
-  client.get("/rcn=1", contentType);
+  while (client.connected()) {
+    Serial.print("Sending hello ");
+    Serial.println(count);
 
-  // read the status code and body of the response
-  int statusCode = client.responseStatusCode();
-  String response = client.responseBody();
+    // send a hello #
+    client.beginMessage(TYPE_TEXT);
+    client.print("hello ");
+    client.print(count);
+    client.endMessage();
 
-  Serial.print("Status code: ");
-  Serial.println(statusCode);
-  Serial.print("Response: ");
-  Serial.println(response);
+    // increment count for next message
+    count++;
 
-  Serial.println("Wait five seconds");
-  delay(5000);
+    // check if a message is available to be received
+    int messageSize = client.parseMessage();
+
+    if (messageSize > 0) {
+      Serial.println("Received a message:");
+      Serial.println(client.readString());
+    }
+
+    // wait 5 seconds
+    delay(5000);
+  }
+
+  Serial.println("disconnected");
 }

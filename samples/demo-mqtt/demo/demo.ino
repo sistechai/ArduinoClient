@@ -12,8 +12,12 @@
   #include <WiFi.h>
 #endif
 
-const char serverAddress[] = "192.168.0.114";
-const int port = 3000;
+///////please enter your sensitive data in the Secret arduino_secrets.h
+/////// WiFi Settings ///////
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+const char serverAddress[] = "localhost";
+const int port = 1883;
 
 WiFiClient wifi;
 MqttClient client(wifi);

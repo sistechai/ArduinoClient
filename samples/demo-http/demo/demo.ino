@@ -12,13 +12,19 @@
   #include <WiFi.h>
 #endif
 
-char serverAddress[] = "192.168.0.114";
+///////please enter your sensitive data in the Secret arduino_secrets.h
+/////// WiFi Settings ///////
+char ssid[] = SECRET_SSID;
+char pass[] = SECRET_PASS;
+char xm2mri[] = SECRET_XM2MRI;
+char xm2morigin[] = SECRET_XM2MORIGIN;
+
+char serverAddress[] = "localhost";
 int port = 3000;
 
 WiFiClient wifi;
-WebSocketClient client = WebSocketClient(wifi, serverAddress, port);
+HttpClient client = HttpClient(wifi, serverAddress, port);
 int status = WL_IDLE_STATUS;
-int count = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -29,7 +35,8 @@ void setup() {
 
   while ( status != WL_CONNECTED) {
     Serial.print("Attempting to connect to Network named: ");
-    Serial.println(ssid);                   // print the network name (SSID);
+    // print the network name (SSID);
+    Serial.println(ssid);
 
     // Connect to WPA/WPA2 network:
     status = WiFi.begin(ssid, pass);
@@ -47,33 +54,23 @@ void setup() {
 }
 
 void loop() {
-  Serial.println("starting WebSocket client");
-  client.begin();
+  Serial.println("making GET request");
+  client.beginRequest();
+  client.get("/Mobius?rcn=1");
+  client.sendHeader(HTTP_HEADER_CONTENT_TYPE, "application/json");
+  client.sendHeader("X-M2M-Origin", xm2morigin);
+  client.sendHeader("X-M2M-RI", xm2mri);
+  client.endRequest();
 
-  while (client.connected()) {
-    Serial.print("Sending hello ");
-    Serial.println(count);
+  // read the status code and body of the response
+  int statusCode = client.responseStatusCode();
+  String response = client.responseBody();
 
-    // send a hello #
-    client.beginMessage(TYPE_TEXT);
-    client.print("hello ");
-    client.print(count);
-    client.endMessage();
+  Serial.print("Status code: ");
+  Serial.println(statusCode);
+  Serial.print("Response: ");
+  Serial.println(response);
 
-    // increment count for next message
-    count++;
-
-    // check if a message is available to be received
-    int messageSize = client.parseMessage();
-
-    if (messageSize > 0) {
-      Serial.println("Received a message:");
-      Serial.println(client.readString());
-    }
-
-    // wait 5 seconds
-    delay(5000);
-  }
-
-  Serial.println("disconnected");
+  Serial.println("Wait five seconds");
+  delay(5000);
 }
